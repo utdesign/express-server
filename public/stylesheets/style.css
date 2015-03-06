@@ -1,0 +1,32 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+img{
+	width: 800px;
+	height: 600px;
+}
+#content-wrapper{
+	display: inline-block;
+}
+
+.alert{
+	margin-top: 20px;
+}
+
+#submit_button{
+width: 100px;
+margin-top: 10px;
+}
+
+.alert-success{
+	margin-bottom: 0px;
+}
+
+#text_data{
+}

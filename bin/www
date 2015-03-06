@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../main');
+var debug = require('debug')('node-express:server');
+var http = require('http');
+var fs = require('fs');
+/**
+ * Get port from environment and store in Express.
+ */
+var net = require('net');
+
+var server2 = net.createServer(function (socket) {
+    // We have a connection - a socket object is assigned to the connection automatically
+    console.log('CONNECTED: ' + socket.remoteAddress +':'+ socket.remotePort);
+	//var command = "get 1";
+	//socket.write(command);
+	//console.log(socket);
+    // Add a 'data' event handler to this instance of socket
+	var command = "";
+//	var pin = ['1','5'];
+	//pin.forEach(function (data){
+		//command = "get " + data;
+		//socket.write(command);
+	//});
+	/*var index;
+	var pin = ["3", "5"];
+	for (index = 0; index < pin.length; index++) {
+		command ="";
+		command = "get " + pin[index];
+		console.log(command);
+		socket.write(command);
+	}
+	/*socket.on('connect', function(data){
+		var command = "get 1";
+		socket.write(command);
+	});*/
+	
+	fs.watchFile('files/my_file2.txt', function (curr, prev) {
+		//console.log("CHANGED");
+		var tcp_to_http_file = "my_file2.txt";
+		var text_data = "";
+		var readstream = fs.createReadStream("files/" + tcp_to_http_file);
+		readstream.on('data', function(data){
+			//console.log(data);
+			socket.write(data);
+		});
+	});
+	
+    socket.on('data', function(data) {
+        console.log('DATA ' + socket.remoteAddress + ': ' + data);
+        // Write the data back to the socket, the client will receive it as data from the serve
+
+		//if (fs.exists('/files/my_file.txt', function (exists) {
+		//	util.debug(exists ? "it's there" : "no passwd!");
+		//});
+		//var http_to_tcp_file = "tcp_to_http_" + socket.remoteAddress + ".txt";
+		var http_to_tcp_file = "my_file.txt";
+		var stream = fs.createWriteStream("files/" + http_to_tcp_file, {flags:'a'});
+		stream.once('open', function(fd) {
+			stream.write(data);
+			stream.end();
+		});
+		//socket.write();
+    });
+    // Add a 'close' event handler to this instance of socket
+    socket.on('close', function(data) {
+        console.log('CLOSED: ' + socket.remoteAddress +' '+ socket.remotePort);
+    });
+});
+
+//server2.listen(1337, '192.168.43.25'); 
+//server2.listen(1337, '127.0.0.1');
+server2.listen(1337, '192.168.0.6');
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

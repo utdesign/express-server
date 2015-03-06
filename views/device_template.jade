@@ -1,0 +1,15 @@
+extends layout
+block content
+	script(type='text/javascript', src='/javascripts/custom_script.js')
+	h1(id="title")=title
+	img(id="image" src=image_link)
+	div(id="content-wrapper")
+		div(class="alert-sending-message")="sending..."
+		div(class="alert alert-success", role="alert")="The message has been sent successfully!"
+		div(class="result-group")
+			h2="Message from the device:"
+			p(id="text_data", class="well")
+		div(class="input-group")
+			label(for="command") #{command_label}
+			input(class="form-control", placeholder ="Type a command here", id="command", type="text", name="command")
+		button(id='submit_button', type="button", class="btn btn-primary")="Send"
