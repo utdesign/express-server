@@ -58,3 +58,4 @@ Put value 0
 Put value 1
 Read value 1
 Put value -1
+Put value -1
