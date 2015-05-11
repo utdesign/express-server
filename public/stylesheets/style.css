@@ -57,3 +57,27 @@ label{
 .alert-success{
 	margin-bottom: 0px;
 }
+
+/***
+ * Graphing
+ ***/
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  /*display: none;*/
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+#graphing_data{
+	display: none;
+}

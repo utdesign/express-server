@@ -12,49 +12,108 @@ var fs = require('fs');
 /**
  * Get port from environment and store in Express.
  */
+ 
 var net = require('net');
+var connectionsFromHTTP = {};				// Format: "id":Socket
+var connectionsFromDevices = {};			// Format: "id":Socket
 
 /**
  * Create TCP Server
  */
+ 
 var serverTCP = net.createServer(function (socket) {
-    
 	console.log('CONNECTED: ' + socket.remoteAddress +':'+ socket.remotePort);
-	
-	fs.watchFile('files/my_file2.txt', function (curr, prev) {
-		var tcp_to_http_file = "my_file2.txt";
-		var text_data = "";
-		var readstream = fs.createReadStream("files/" + tcp_to_http_file);
-		readstream.on('data', function(data){
-			socket.write(data);
-		});
-	});
-
-    // Add a 'data' event handler to this instance of socket
+	var text_data = "";
+    
+	// Add a 'data' event handler to this instance of socket
     socket.on('data', function(data) {
         console.log('DATA ' + socket.remoteAddress + ': ' + data);
-        // Write the data back to the socket, the client will receive it as data from the serve
-		//var http_to_tcp_file = "tcp_to_http_" + socket.remoteAddress + ".txt";
+		text_data += data;
+		var texts = text_data.split("\r");
+		//console.log(texts);
 		
-		var http_to_tcp_file = "my_file.txt";
-		var stream = fs.createWriteStream("files/" + http_to_tcp_file, {flags:'a'});
-		stream.once('open', function(fd) {
-			stream.write(data);
-			stream.end();
-		});
-		//socket.write();
+		if (texts.length >= 2){					// If the data are all received
+			//console.log(texts);
+			text_data = ""; 					// Reset the text data			
+			
+			if (texts[0].indexOf("MAC")===0){
+				var parts = texts[0].split(" ");
+				
+				if (parts[1] == "HTTP"){	// This message is from HTTP server
+					var id = parts[2];
+					connectionsFromHTTP[id] = socket;
+				}
+				else{	// This message is from the device
+					var id = parts[1];
+					connectionsFromDevices[id] = socket;
+					var wstream = fs.createWriteStream('files/MAC.txt',{'flags': 'a'});
+					wstream.write(id + "\n");
+				}
+			}
+			
+			else {
+				if (texts[0].indexOf("HTTP")===0){
+					//var parts = texts[0].split(" ");
+					var command = texts[2];
+					connectionsFromHTTP[texts[1]] = socket;
+					
+					//console.log(targetSocketID);
+					var targetSocket = connectionsFromDevices[texts[1]];
+					if (targetSocket != null)
+						targetSocket.write(command);
+				}
+				else{	// messages from device
+					var index = "";
+					for (key in connectionsFromDevices){
+						if (connectionsFromDevices[key] == socket){
+							index = key;
+							break;
+						}
+					}
+					
+					console.log(index);
+					var targetSocket = connectionsFromHTTP[index];
+					if (targetSocket != null)
+						targetSocket.write(texts[0]);
+				}
+			}
+		}
     });
 
     // Add a 'close' event handler to this instance of socket
     socket.on('close', function(data) {
-        console.log('CLOSED: ' + socket.remoteAddress +' '+ socket.remotePort);
+		//delete connections[connectionID];
     });
 });
 
+function parsetoTCPSocket(data, socketID){
+	var targetSocketID = socketID; //getTargetSocket(connectionsFromHTTP, socket);
+	//console.log(targetSocketID);
+	var targetSocket = connectionsFromDevices[targetSocketID];
+	if (targetSocket != null)
+		targetSocket.write(data);
+}
+
+function parsetoHTTPSocket(data, socket){
+	var targetSocketID = getTargetSocket(connectionsFromDevices, socket);
+	console.log(targetSocketID);
+	var targetSocket = connectionsFromHTTP[targetSocketID];
+	if (targetSocket != null)
+		targetSocket.write(data);
+}
+
+function getTargetSocket(connections, socket){
+	for (key in connections){
+		if (connections[key] == socket){
+			return key;
+		}
+	}
+}
+
 //serverTCP.listen(1337, '192.168.43.25'); 
 //serverTCP.listen(1337, '127.0.0.1');
-//serverTCP.listen(1337, '192.168.0.6');
-serverTCP.listen(1337, '10.21.47.59');
+serverTCP.listen(1337, '192.168.0.8');
+//serverTCP.listen(1337, '10.21.47.59');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -64,6 +123,7 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
 /**
  * Listen on provided port, on all network interfaces.
  */

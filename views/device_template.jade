@@ -1,6 +1,7 @@
 extends layout
 block content
 	script(type='text/javascript', src='/javascripts/ajax_handlers.js')
+	script(type='text/javascript', src='/javascripts/d3.min.js')
 	h1(id="title")=title
 	img(id="image" src=image_link)
 
@@ -37,4 +38,8 @@ block content
 			div(class="input-group input-group-6")
 				button(class='form-button btn btn-primary', type='button')="Sleep"
 				input(class="form-command", placeholder ="Type a number here", id="command", type="text", name="")
+		
 		button(id='submit_button', type="button", class="btn btn-success")="Send"
+		
+		div(class='graphing')
+			div(id='graphing_data')
